@@ -7,7 +7,7 @@ class Card
   end
 
   def to_s
-    "#{suit}の#{rank}です。"
+    puts "#{suit}の#{rank}です。"
   end
 end
 
@@ -23,7 +23,7 @@ class Deck
     end
   end
 
-  def shuffule_cards
+  def shuffle_cards
     cards.shuffle!
   end
 
@@ -44,7 +44,7 @@ class Player
     cards << card
   end
 
-  def calcurate_hand
+  def calculate_hand
     total = 0
     cards.each do |card|
       if card.rank == 'A'
@@ -66,7 +66,7 @@ class Player
   end
 
   def to_s
-    "#{name}の現在の得点は#{calcurate_hand}です。"
+    puts "#{name}の現在の得点は#{calculate_hand}です。"
   end
 end
 
@@ -80,30 +80,30 @@ class Blackjack
   end
 
   def deal_card
+    deck.shuffle_cards
     for i in 1..2 do
       player.hit(deck.draw_card)
       dealer.hit(deck.draw_card)
-      "#{player.name}の引いたカードは#{player.cards.last.suit}の#{player.cards.last.rank}です。"
+      puts "#{player.name}の引いたカードは#{player.cards.last.suit}の#{player.cards.last.rank}です。"
       if i == 1
-        "#{dealer.name}の引いたカードは#{dealer.cards.last.suit}の#{dealer.cards.last.rank}です。"
+        puts "#{dealer.name}の引いたカードは#{dealer.cards.last.suit}の#{dealer.cards.last.rank}です。"
       else
-        "ディーラーの引いた2枚目のカードはわかりません。"
+        puts "ディーラーの引いた2枚目のカードはわかりません。"
       end
     end
   end
 
   def player_turn
-    while player.calcurate_hand < 21
-      "#{player.to_s}カードを引きますか？（Y/N）"
+    while player.calculate_hand < 21 do
+      puts "#{player.to_s}カードを引きますか？（Y/N）"
       answer = gets.chomp.upcase
       if answer == 'Y'
         player.hit(deck.draw_card)
-        "#{player.name}の引いたカードは#{player.cards.last.suit}の#{player.cards.last.rank}です。"
-
+        puts "#{player.name}の引いたカードは#{player.cards.last.suit}の#{player.cards.last.rank}です。"
       elsif answer == 'N'
         break
       else
-        "有効な入力ではありません"
+        puts "有効な入力ではありません"
       end
     end
   end
@@ -111,32 +111,32 @@ class Blackjack
   def dealer_turn
     # ディーラーが2枚目に引いたカード
     dealer_second_card = dealer.cards.last
-    while dealer.calcurate_hand < 17
+    while dealer.calculate_hand < 17 do
       dealer.hit(deck.draw_card)
     end
-    "ディーラーの引いた2枚目のカードは#{dealer_second_card.suit}の#{dealer_second_card.rank}でした。"
+    puts "ディーラーの引いた2枚目のカードは#{dealer_second_card.suit}の#{dealer_second_card.rank}でした。"
     dealer.to_s
   end
 
   def result
-    if player.calcurate_hand > 21
-      puts "#{player.name}の勝ちです！"
-    elsif dealer.calcurate_hand > 21
+    puts player.to_s
+    if player.calculate_hand > 21
       puts "#{dealer.name}の勝ちです！"
-    elsif player.calcurate_hand > dealer.calcurate_hand
+    elsif dealer.calculate_hand > 21
       puts "#{player.name}の勝ちです！"
-    elsif player.calcurate_hand < dealer.calcurate_hand
+    elsif player.calculate_hand > dealer.calculate_hand
+      puts "#{player.name}の勝ちです！"
+    elsif player.calculate_hand < dealer.calculate_hand
       puts "#{dealer.name}の勝ちです！"
+    else
+      puts "引き分けです！"
     end
   end
 
-  def play
-    deal_card
-    player_turn
-    dealer_turn
-    result
-  end
 end
 
 game = Blackjack.new
-game.play
+game.deal_card
+game.player_turn
+game.dealer_turn
+game.result
