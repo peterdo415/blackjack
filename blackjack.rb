@@ -1,100 +1,142 @@
-# カードをランダムに引く
-def your_drow
-  card = ["ハート", "ダイヤ", "スペード", "クローバー"].sample
-  @your_num = rand(1..13)
-  if @your_num >= 10
-    @your_point = 10
-  elsif @your_num == 1
-    @your_point = @your_sum + 11 <= 21 ? 11 : 1
-  else
-    @your_point = @your_num
-  end
-  case @your_num
-  when 1 then @your_num = "A"
-  when 11 then @your_num = "J"
-  when 12 then @your_num = "Q"
-  when 13 then @your_num = "K"
-  end
-  p "あなたが引いたカードは#{card}の#{@your_num}です。"
-end
+class Card
+  attr_reader :suit, :rank
 
-def dealer_drow
-  @card = ["ハート", "ダイヤ", "スペード", "クローバー"].sample
-  @dealer_num = rand(14)
-  if @dealer_num >= 10
-    @dealer_point = 10
-  elsif @dealer_num == 1
-    @dealer_point = @dealer_sum + 11 <= 21 ? 11 : 1
-  else
-    @dealer_point = @dealer_num
+  def initialize(suit, rank)
+    @suit = suit
+    @rank = rank
   end
-  case @dealer_num
-  when 1 then @dealer_num = "A"
-  when 11 then @dealer_num = "J"
-  when 12 then @dealer_num = "Q"
-  when 13 then @dealer_num = "K"
+
+  def to_s
+    "#{suit}の#{rank}です。"
   end
 end
 
-# カードを引くかどうか
-def question
-  puts "あなたの現在の得点は#{@your_sum}です。カードを引きますか？（Y/N）"
-  @input_answer = gets.chomp
-  while @input_answer == "Y" do
-    your_drow
-    @your_sum += @your_point
-    puts "あなたの現在の得点は#{@your_sum}です。カードを引きますか？（Y/N）"
-    @input_answer = gets.chomp
-  end
-end
+class Deck
+  attr_reader :cards
 
-# 結果
-def result
-  p "あなたの得点は#{@your_sum}です。"
-  p "ディーラーの得点は#{@dealer_sum}です。"
-  if @your_sum > 21
-    p "ディーラーの勝ちです！"
-  elsif
-    @dealer_sum > 21
-    p "あなたの勝ちです！"
-  elsif @your_sum > @dealer_sum
-    p "あなたの勝ちです！"
-  elsif @your_sum < @dealer_sum
-    p "ディーラーの勝ちです！"
-  end
-end
-
-def blackjack
-  @your_sum = 0
-  @dealer_sum = 0
-  puts "ブラックジャックを開始します。"
-  2.times do
-    your_drow
-    @your_sum += @your_point
-  end
-
-  for i in 1..2 do
-    dealer_drow
-    if i < 2 then
-      p "ディーラーが引いたカードは#{@card}の#{@dealer_num}"
-    else
-      p "ディーラーの引いた2枚目のカードはわかりません。"
-      @twice_num = @dealer_num
+  def initialize
+    @cards = []
+    ['スペード', 'ハート', 'ダイヤ', 'クローバー'].each do |suit|
+      ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A' ].each do |rank|
+        @cards << Card.new(suit,rank)
+      end
     end
-    @dealer_sum += @dealer_point
   end
 
-  question
-  p "ディーラーの引いた2枚目のカードは#{@card}の#{@twice_num}でした。"
-  p "ディーラーの現在の得点は#{@dealer_sum}です。"
-  while @dealer_sum < 18
-    dealer_drow
-    p "ディーラーが引いたカードは#{@card}の#{@dealer_num}"
-    @dealer_sum += @dealer_point
+  def shuffule_cards
+    cards.shuffle!
   end
-  
-  result
-  p "ブラックジャックを終了します。"
+
+  def draw_card
+    cards.pop
+  end
 end
 
-blackjack
+class Player
+  attr_reader :name, :cards
+
+  def initialize(name)
+    @name = name
+    @cards = []
+  end
+
+  def hit(card)
+    cards << card
+  end
+
+  def calcurate_hand
+    total = 0
+    cards.each do |card|
+      if card.rank == 'A'
+        total += 11
+      elsif card.rank.to_i == 0
+        total += 10
+      else
+        total += card.rank.to_i
+      end
+    end
+
+    # Aの処理
+    cards.select {|card| card.rank == 'A'}.count.times do
+      break if total <= 21
+      total -= 10
+    end
+    
+    total
+  end
+
+  def to_s
+    "#{name}の現在の得点は#{calcurate_hand}です。"
+  end
+end
+
+class Blackjack
+  attr_reader :deck, :player, :dealer
+  
+  def initialize
+    @deck = Deck.new
+    @player = Player.new('Player')
+    @dealer = Player.new('Dealer')
+  end
+
+  def deal_card
+    for i in 1..2 do
+      player.hit(deck.draw_card)
+      dealer.hit(deck.draw_card)
+      "#{player.name}の引いたカードは#{player.cards.last.suit}の#{player.cards.last.rank}です。"
+      if i == 1
+        "#{dealer.name}の引いたカードは#{dealer.cards.last.suit}の#{dealer.cards.last.rank}です。"
+      else
+        "ディーラーの引いた2枚目のカードはわかりません。"
+      end
+    end
+  end
+
+  def player_turn
+    while player.calcurate_hand < 21
+      "#{player.to_s}カードを引きますか？（Y/N）"
+      answer = gets.chomp.upcase
+      if answer == 'Y'
+        player.hit(deck.draw_card)
+        "#{player.name}の引いたカードは#{player.cards.last.suit}の#{player.cards.last.rank}です。"
+
+      elsif answer == 'N'
+        break
+      else
+        "有効な入力ではありません"
+      end
+    end
+  end
+
+  def dealer_turn
+    # ディーラーが2枚目に引いたカード
+    dealer_second_card = dealer.cards.last
+    while dealer.calcurate_hand < 17
+      dealer.hit(deck.draw_card)
+    end
+    "ディーラーの引いた2枚目のカードは#{dealer_second_card.suit}の#{dealer_second_card.rank}でした。"
+    dealer.to_s
+  end
+
+  def result
+    if player.calcurate_hand > 21
+      puts "#{player.name}の勝ちです！"
+    elsif dealer.calcurate_hand > 21
+      puts "#{dealer.name}の勝ちです！"
+    elsif player.calcurate_hand > dealer.calcurate_hand
+      puts "#{player.name}の勝ちです！"
+    elsif player.calcurate_hand < dealer.calcurate_hand
+      puts "#{dealer.name}の勝ちです！"
+    end
+  end
+
+  def play
+    deal_card
+    player_turn
+    dealer_turn
+    result
+  end
+end
+
+game = Blackjack.new
+game.play
